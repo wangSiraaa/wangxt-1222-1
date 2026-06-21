@@ -102,9 +102,13 @@ const WaterSupplyPage: React.FC = () => {
       return
     }
     try {
-      const data = {
-        ...form,
+      const data: Partial<WaterSupplyImpact> = {
+        schedule_id: form.schedule_id || undefined,
+        water_supply_unit: form.water_supply_unit,
         estimated_intake: form.estimated_intake ? parseFloat(form.estimated_intake) : undefined,
+        impact_level: form.impact_level ? (form.impact_level as 'low' | 'medium' | 'high') : undefined,
+        impact_desc: form.impact_desc || undefined,
+        viewer_name: form.viewer_name || undefined,
       }
       await waterSupplyApi.create(data)
       setModalVisible(false)

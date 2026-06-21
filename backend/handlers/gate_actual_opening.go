@@ -103,8 +103,34 @@ func (h *GateActualOpeningHandler) Update(c *fiber.Ctx) error {
 		return utils.NotFound(c, "Actual opening record not found")
 	}
 
+	oldDeviationExceeded := record.IsDeviationExceeded
+
 	if err := c.BodyParser(&record); err != nil {
 		return utils.BadRequest(c, "Invalid request body")
+	}
+
+	var plannedOpening float64
+	if record.ScheduleID != "" {
+		var schedule models.GateSchedule
+		if err := config.DB.First(&schedule, "id = ?", record.ScheduleID).Error; err == nil {
+			plannedOpening = schedule.PlannedOpening
+		}
+	}
+
+	deviation, exceeded := h.service.CheckGateDeviation(&record, plannedOpening)
+	if exceeded && record.DeviationReason == "" {
+		return utils.BadRequest(c, "闸门实际开度与计划偏差过大（"+formatFloat(deviation)+"%），请填写偏差原因")
+	}
+
+	if exceeded && !oldDeviationExceeded {
+		warning := h.service.GenerateWarning(
+			"gate_deviation",
+			"medium",
+			"闸门实际开度与计划偏差过大，偏差值："+formatFloat(deviation)+"%",
+			record.ID,
+			"gate_actual_opening",
+		)
+		config.DB.Create(warning)
 	}
 
 	if err := config.DB.Save(&record).Error; err != nil {

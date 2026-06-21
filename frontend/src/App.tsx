@@ -9,6 +9,7 @@ import EcologicalFlowPage from '@/pages/EcologicalFlowPage'
 import WaterSupplyPage from '@/pages/WaterSupplyPage'
 import ApprovalPage from '@/pages/ApprovalPage'
 import WarningPage from '@/pages/WarningPage'
+import ScheduleDetailPage from '@/pages/ScheduleDetailPage'
 
 const App: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Dashboard />} />
           <Route path="/water-level" element={<WaterLevelPage />} />
           <Route path="/gate-schedule" element={<GateSchedulePage />} />
+          <Route path="/gate-schedule/:id" element={<ScheduleDetailPage />} />
           <Route path="/gate-actual" element={<GateActualPage />} />
           <Route path="/ecological" element={<EcologicalFlowPage />} />
           <Route path="/water-supply" element={<WaterSupplyPage />} />

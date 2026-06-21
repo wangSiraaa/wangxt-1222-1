@@ -93,6 +93,16 @@ export interface ScheduleCurveData {
   actual_discharge: number
   water_level: number
   inflow: number
+  deviation: number
+  is_deviation_exceeded: boolean
+}
+
+export interface ScheduleDetail {
+  schedule: GateSchedule
+  actual_openings: GateActualOpening[]
+  water_supply_impact: WaterSupplyImpact[]
+  ecological_flow: EcologicalFlowConfirmation[]
+  approvals: ApprovalRecord[]
 }
 
 export interface ApiResponse<T> {

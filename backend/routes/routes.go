@@ -28,6 +28,7 @@ func SetupRoutes(app *fiber.App) {
 		gateSchedule.Get("/", gateScheduleHandler.List)
 		gateSchedule.Get("/curve", gateScheduleHandler.GetCurveData)
 		gateSchedule.Get("/:id", gateScheduleHandler.Get)
+		gateSchedule.Get("/:id/detail", gateScheduleHandler.GetDetail)
 		gateSchedule.Put("/:id", gateScheduleHandler.Update)
 		gateSchedule.Delete("/:id", gateScheduleHandler.Delete)
 		gateSchedule.Post("/:id/submit", gateScheduleHandler.Submit)

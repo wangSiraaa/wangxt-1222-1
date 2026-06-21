@@ -167,3 +167,33 @@ func (h *GateScheduleHandler) GetCurveData(c *fiber.Ctx) error {
 
 	return utils.Success(c, data)
 }
+
+func (h *GateScheduleHandler) GetDetail(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var schedule models.GateSchedule
+	if err := config.DB.First(&schedule, "id = ?", id).Error; err != nil {
+		return utils.NotFound(c, "Gate schedule not found")
+	}
+
+	var actualOpenings []models.GateActualOpening
+	config.DB.Where("schedule_id = ?", id).Order("record_time DESC").Find(&actualOpenings)
+
+	var waterSupplyImpacts []models.WaterSupplyImpact
+	config.DB.Where("schedule_id = ?", id).Find(&waterSupplyImpacts)
+
+	var ecologicalFlows []models.EcologicalFlowConfirmation
+	config.DB.Where("schedule_id = ?", id).Find(&ecologicalFlows)
+
+	var approvals []models.ApprovalRecord
+	config.DB.Where("business_id = ? AND business_type = ?", id, "gate_schedule").Order("approved_at DESC").Find(&approvals)
+
+	detail := map[string]interface{}{
+		"schedule":           schedule,
+		"actual_openings":    actualOpenings,
+		"water_supply_impact": waterSupplyImpacts,
+		"ecological_flow":    ecologicalFlows,
+		"approvals":          approvals,
+	}
+
+	return utils.Success(c, detail)
+}

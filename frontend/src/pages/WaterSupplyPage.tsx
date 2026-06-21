@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { waterSupplyApi, gateScheduleApi } from '@/services/api'
 import type { WaterSupplyImpact, GateSchedule } from '@/types'
 import { formatDateTime, formatNumber, getWarningLevelColor } from '@/utils'
@@ -7,6 +8,7 @@ import '@/styles/table.css'
 import '@/styles/form.css'
 
 const WaterSupplyPage: React.FC = () => {
+  const navigate = useNavigate()
   const [list, setList] = useState<WaterSupplyImpact[]>([])
   const [schedules, setSchedules] = useState<GateSchedule[]>([])
   const [loading, setLoading] = useState(false)
@@ -205,7 +207,16 @@ const WaterSupplyPage: React.FC = () => {
             list.map((item) => (
               <tr key={item.id}>
                 <td>{formatDateTime(item.created_at)}</td>
-                <td>{item.schedule_id || '-'}</td>
+                <td>
+                  {item.schedule_id ? (
+                    <a
+                      className="table-link"
+                      onClick={(e) => { e.preventDefault(); navigate(`/gate-schedule/${item.schedule_id}`) }}
+                    >
+                      {item.schedule_id}
+                    </a>
+                  ) : '-'}
+                </td>
                 <td>{item.water_supply_unit}</td>
                 <td>{formatNumber(item.estimated_intake)}</td>
                 <td>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ecologicalFlowApi, gateScheduleApi } from '@/services/api'
 import type { EcologicalFlowConfirmation, GateSchedule } from '@/types'
 import { formatDateTime, formatNumber, getStatusColor, getStatusText } from '@/utils'
@@ -7,6 +8,7 @@ import '@/styles/table.css'
 import '@/styles/form.css'
 
 const EcologicalFlowPage: React.FC = () => {
+  const navigate = useNavigate()
   const [list, setList] = useState<EcologicalFlowConfirmation[]>([])
   const [schedules, setSchedules] = useState<GateSchedule[]>([])
   const [loading, setLoading] = useState(false)
@@ -195,7 +197,16 @@ const EcologicalFlowPage: React.FC = () => {
             list.map((item) => (
               <tr key={item.id}>
                 <td>{formatDateTime(item.created_at)}</td>
-                <td>{item.schedule_id || '-'}</td>
+                <td>
+                  {item.schedule_id ? (
+                    <a
+                      className="table-link"
+                      onClick={(e) => { e.preventDefault(); navigate(`/gate-schedule/${item.schedule_id}`) }}
+                    >
+                      {item.schedule_id}
+                    </a>
+                  ) : '-'}
+                </td>
                 <td>{formatNumber(item.min_required_flow)}</td>
                 <td style={{ color: !item.is_sufficient ? '#ff4d4f' : 'inherit' }}>
                   {formatNumber(item.confirmed_flow)}

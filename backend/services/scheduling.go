@@ -81,14 +81,21 @@ func (s *SchedulingService) CalculateWaterImpact(schedule *models.GateSchedule, 
 func (s *SchedulingService) GenerateScheduleCurveData(startDate, endDate time.Time) ([]map[string]interface{}, error) {
 	var data []map[string]interface{}
 	current := startDate
+	threshold := config.AppConfig.GateDeviationThreshold
 
 	for current.Before(endDate) || current.Equal(endDate) {
+		planned := 30 + math.Sin(float64(current.Hour())/6.0)*20
+		actual := planned + (rand.Float64()*10 - 5)
+		deviation := math.Abs(actual - planned)
+
 		hourlyData := map[string]interface{}{
-			"time":              current.Format("2006-01-02 15:04"),
-			"planned_discharge": 30 + math.Sin(float64(current.Hour())/6.0)*20,
-			"actual_discharge":  30 + math.Sin(float64(current.Hour())/6.0)*20 + (rand.Float64()*10 - 5),
-			"water_level":       32 + math.Sin(float64(current.Day())/5.0)*3,
-			"inflow":            40 + math.Cos(float64(current.Hour())/8.0)*15,
+			"time":                   current.Format("2006-01-02 15:04"),
+			"planned_discharge":      planned,
+			"actual_discharge":       actual,
+			"water_level":            32 + math.Sin(float64(current.Day())/5.0)*3,
+			"inflow":                 40 + math.Cos(float64(current.Hour())/8.0)*15,
+			"deviation":              deviation,
+			"is_deviation_exceeded":  deviation > threshold,
 		}
 		data = append(data, hourlyData)
 		current = current.Add(time.Hour)

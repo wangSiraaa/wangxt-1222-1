@@ -8,6 +8,7 @@ import type {
   ApprovalRecord,
   WarningRecord,
   ScheduleCurveData,
+  ScheduleDetail,
   ApiResponse,
 } from '@/types'
 
@@ -35,6 +36,8 @@ export const gateScheduleApi = {
     request.get<ApiResponse<ScheduleCurveData[]>>('/gate-schedule/curve', { params }).then((r) => r.data),
   get: (id: string) =>
     request.get<ApiResponse<GateSchedule>>(`/gate-schedule/${id}`).then((r) => r.data),
+  getDetail: (id: string) =>
+    request.get<ApiResponse<ScheduleDetail>>(`/gate-schedule/${id}/detail`).then((r) => r.data),
   update: (id: string, data: Partial<GateSchedule>) =>
     request.put<ApiResponse<GateSchedule>>(`/gate-schedule/${id}`, data).then((r) => r.data),
   remove: (id: string) =>

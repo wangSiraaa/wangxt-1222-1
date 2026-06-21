@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { gateScheduleApi, waterLevelApi, approvalApi } from '@/services/api'
 import type { GateSchedule, WaterLevelRecord } from '@/types'
 import { formatDateTime, formatNumber, getStatusColor, getStatusText } from '@/utils'
@@ -8,6 +9,7 @@ import '@/styles/table.css'
 import '@/styles/form.css'
 
 const GateSchedulePage: React.FC = () => {
+  const navigate = useNavigate()
   const [list, setList] = useState<GateSchedule[]>([])
   const [loading, setLoading] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
@@ -245,6 +247,7 @@ const GateSchedulePage: React.FC = () => {
                 <td>{item.operator_name || '-'}</td>
                 <td>{formatDateTime(item.created_at)}</td>
                 <td>
+                  <button className="btn btn-sm" onClick={() => navigate(`/gate-schedule/${item.id}`)}>详情</button>
                   {item.status === 'draft' && (
                     <>
                       <button className="btn btn-sm" onClick={() => handleEdit(item)}>编辑</button>

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"reservoir-gate-scheduling/config"
 	"reservoir-gate-scheduling/handlers"
 
 	"github.com/gofiber/fiber/v2"
@@ -81,8 +82,9 @@ func SetupRoutes(app *fiber.App) {
 
 	api.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"status":  "ok",
-			"service": "reservoir-gate-scheduling",
+			"status":       "ok",
+			"service":      "reservoir-gate-scheduling",
+			"db_connected": config.DB != nil,
 		})
 	})
 }

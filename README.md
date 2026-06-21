@@ -48,8 +48,10 @@
 │   ├── middleware/          # 中间件
 │   ├── services/            # 业务服务
 │   ├── scripts/             # 数据库初始化脚本
-│   │   ├── init.sql         # 建库建表+种子数据
-│   │   └── init.sh          # 一键初始化脚本
+│   │   ├── init_db.sql      # 仅建库（连接 postgres 库执行）
+│   │   ├── init_schema.sql  # 建表+索引+种子数据（连接 reservoir_scheduling 库执行）
+│   │   ├── init.sql         # 旧版单脚本（保留作参考，不推荐使用）
+│   │   └── init.sh          # 一键初始化脚本（推荐）
 │   ├── utils/               # 工具函数
 │   ├── main.go              # 入口文件
 │   └── go.mod
@@ -71,6 +73,9 @@
 
 ### 一、初始化 PostgreSQL 数据库（必做）
 
+> **重要前提**：CREATE DATABASE 不能在事务块内执行，所以必须分两步：
+> ① 先连接 `postgres` 库创建数据库 → ② 再连接 `reservoir_scheduling` 库建表
+
 #### 方式一：使用一键脚本（推荐）
 
 ```bash
@@ -79,25 +84,38 @@ chmod +x init.sh
 ./init.sh
 ```
 
-脚本会自动创建 `reservoir_scheduling` 数据库、所有业务表，并插入演示数据。
+脚本会自动完成三步：检查/创建 `reservoir_scheduling` 数据库 → 建表+索引 → 插入演示种子数据 → 验证表数量。
+
 如需自定义连接参数，可通过环境变量传入：
 
 ```bash
 PGUSER=postgres PGPASSWORD=yourpass PGHOST=localhost PGPORT=5432 ./init.sh
 ```
 
-#### 方式二：手动执行 SQL
+#### 方式二：手动分步执行 SQL（不依赖 shell）
 
 ```bash
-# 使用 postgres 超级用户执行初始化脚本
-psql -U postgres -f backend/scripts/init.sql
+# 第一步：连接 postgres 库，创建数据库（已存在会报错，可忽略）
+psql -U postgres -d postgres -c "CREATE DATABASE reservoir_scheduling ENCODING 'UTF8' TEMPLATE=template0;"
+
+# 第二步：连接新建的 reservoir_scheduling 库，建表并插入演示数据
+psql -U postgres -d reservoir_scheduling -f backend/scripts/init_schema.sql
 ```
 
-该脚本会：
-1. 创建 `reservoir_scheduling` 数据库
-2. 创建 7 张业务表及索引
-3. 插入演示种子数据（水位记录、调度计划、实际开度、生态流量确认等）
-4. 输出各表记录数用于验证
+> 若环境中已启用 dblink 扩展，也可使用 `backend/scripts/init_db.sql`。
+
+初始化成功后会打印 7 张业务表的记录数，均应为 ≥0 的正整数。
+
+#### 常见错误排查
+
+| 现象 | 原因 | 解决方法 |
+|------|------|----------|
+| `CREATE DATABASE cannot run inside a transaction block` | 在事务中执行建库 | 必须用独立的 `psql -c` 命令或分开两个脚本执行，不能 `psql -f init.sql` 一次性跑完 |
+| `psql: error: could not connect to server` | PostgreSQL 未启动或端口/主机不对 | `pg_ctl status` 或 `brew services list` 检查服务状态，确认 DB_HOST/DB_PORT |
+| `role "postgres" does not exist` / `password authentication failed` | 认证失败 | 检查 `pg_hba.conf` 或用系统已有用户：`psql -U $USER -d postgres ...`，然后 `CREATE USER postgres SUPERUSER PASSWORD 'postgres';` |
+| `permission denied to create database` | 当前用户无 CREATEDB 权限 | 以超级用户（如 postgres）登录执行建库 |
+| `database "reservoir_scheduling" does not exist` | 跳过了第一步或建库失败 | 先按"方式二第一步"建库，再执行第二步 |
+| 后端启动日志有 `Warning: Could not connect to database` 且接口返回 503 | DB 未就绪或 .env 配置不对 | 参考 `.env.example` 确认 DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME 是否匹配实际数据库 |
 
 #### 数据表说明
 
@@ -136,7 +154,14 @@ MIN_ECOLOGICAL_FLOW=10.0      # 最小生态流量
 GATE_DEVIATION_THRESHOLD=5.0  # 开度偏差阈值
 ```
 
-健康检查：访问 http://localhost:3001/api/health 应返回 `{"status":"ok"}`
+健康检查：访问 http://localhost:3001/api/health 应返回：
+
+```json
+{"status":"ok","service":"reservoir-gate-scheduling","db_connected":true}
+```
+
+若 `db_connected=false`，说明后端未连上数据库，业务 API 会返回 503 错误，
+请按上方"常见错误排查"核对 `.env` 中 DB_* 配置。
 
 ### 三、启动前端应用
 

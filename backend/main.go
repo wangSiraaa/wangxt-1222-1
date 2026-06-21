@@ -49,6 +49,7 @@ func main() {
 	app.Use(middleware.Logger())
 	app.Use(middleware.RequestID())
 	app.Use(middleware.Recover())
+	app.Use(middleware.DBCheck())
 
 	routes.SetupRoutes(app)
 

@@ -34,3 +34,7 @@ func NotFound(c *fiber.Ctx, message string) error {
 func InternalError(c *fiber.Ctx, message string) error {
 	return Error(c, 500, message)
 }
+
+func ServiceUnavailable(c *fiber.Ctx, message string) error {
+	return Error(c, 503, message)
+}
